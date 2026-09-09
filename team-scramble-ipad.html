@@ -17,7 +17,6 @@
 
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
@@ -43,9 +42,12 @@
   document.getElementById("manifest-link").setAttribute("href", URL.createObjectURL(manifestBlob));
 </script>
 
-<script type="text/babel" data-presets="react">
-const { useState, useEffect, useRef } = React;
-
+<script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
 const ROSTER_KEY = "scramble-roster";
 const HISTORY_KEY = "scramble-history";
 const WEEK_KEY = "scramble-week";
@@ -55,20 +57,36 @@ function lsGet(key) {
   try {
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
+  } catch (e) {
+    return null;
+  }
 }
 function lsSet(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {}
 }
 
 // --- Small inline icon set (avoids needing an external icon package) ---
-function Icon({ path, size = 16, className = "", fill = "none" }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d={path} />
-    </svg>
-  );
+function Icon({
+  path,
+  size = 16,
+  className = "",
+  fill = "none"
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: fill,
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    className: className
+  }, /*#__PURE__*/React.createElement("path", {
+    d: path
+  }));
 }
 const ICONS = {
   shuffle: "M16 3h5v5M4 20L21 3M21 16v5h-5M4 4l5 5m6 6 5 5",
@@ -78,14 +96,18 @@ const ICONS = {
   history: "M3 12a9 9 0 1 0 3-6.7M3 4v6h6M12 7v5l4 2",
   rotate: "M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15",
   check: "M20 6 9 17l-5-5",
-  swords: "M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M3 21l6-6",
+  swords: "M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M3 21l6-6"
 };
-
-function pairKey(a, b) { return [a, b].sort().join("::"); }
-
+function pairKey(a, b) {
+  return [a, b].sort().join("::");
+}
 function generateBestPairing(names, history) {
-  if (names.length < 2) return { teams: [], score: 0 };
-  let best = null, bestScore = Infinity;
+  if (names.length < 2) return {
+    teams: [],
+    score: 0
+  };
+  let best = null,
+    bestScore = Infinity;
   const attempts = 1000;
   for (let a = 0; a < attempts; a++) {
     const shuffled = [...names];
@@ -96,8 +118,13 @@ function generateBestPairing(names, history) {
     const teams = [];
     let i = 0;
     while (i < shuffled.length) {
-      if (shuffled.length - i === 3) { teams.push([shuffled[i], shuffled[i+1], shuffled[i+2]]); i += 3; }
-      else { teams.push([shuffled[i], shuffled[i+1]]); i += 2; }
+      if (shuffled.length - i === 3) {
+        teams.push([shuffled[i], shuffled[i + 1], shuffled[i + 2]]);
+        i += 3;
+      } else {
+        teams.push([shuffled[i], shuffled[i + 1]]);
+        i += 2;
+      }
     }
     let score = 0;
     for (const team of teams) {
@@ -107,11 +134,17 @@ function generateBestPairing(names, history) {
         }
       }
     }
-    if (score < bestScore) { bestScore = score; best = teams; if (score === 0) break; }
+    if (score < bestScore) {
+      bestScore = score;
+      best = teams;
+      if (score === 0) break;
+    }
   }
-  return { teams: best, score: bestScore };
+  return {
+    teams: best,
+    score: bestScore
+  };
 }
-
 function generateMatchups(teams) {
   const shuffled = [...teams];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -121,12 +154,22 @@ function generateMatchups(teams) {
   const matchups = [];
   let i = 0;
   while (i < shuffled.length) {
-    if (shuffled.length - i === 1) { matchups.push({ a: shuffled[i], b: null }); i += 1; }
-    else { matchups.push({ a: shuffled[i], b: shuffled[i+1] }); i += 2; }
+    if (shuffled.length - i === 1) {
+      matchups.push({
+        a: shuffled[i],
+        b: null
+      });
+      i += 1;
+    } else {
+      matchups.push({
+        a: shuffled[i],
+        b: shuffled[i + 1]
+      });
+      i += 2;
+    }
   }
   return matchups;
 }
-
 function TeamScramble() {
   const [roster, setRoster] = useState([]);
   const [present, setPresent] = useState({});
@@ -139,49 +182,91 @@ function TeamScramble() {
   const [weekLog, setWeekLog] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const inputRef = useRef(null);
-
   useEffect(() => {
     const r = lsGet(ROSTER_KEY);
-    if (r) { setRoster(r.roster || []); setPresent(r.present || {}); }
+    if (r) {
+      setRoster(r.roster || []);
+      setPresent(r.present || {});
+    }
     const h = lsGet(HISTORY_KEY);
-    if (h) { setHistory(h.history || {}); setWeekLog(h.weekLog || []); }
+    if (h) {
+      setHistory(h.history || {});
+      setWeekLog(h.weekLog || []);
+    }
     const w = lsGet(WEEK_KEY);
     if (w) setWeek(w.week || 1);
   }, []);
-
-  function persistRoster(nextRoster, nextPresent) { lsSet(ROSTER_KEY, { roster: nextRoster, present: nextPresent }); }
-  function persistHistory(nextHistory, nextWeekLog) { lsSet(HISTORY_KEY, { history: nextHistory, weekLog: nextWeekLog }); }
-  function persistWeek(nextWeek) { lsSet(WEEK_KEY, { week: nextWeek }); }
-
+  function persistRoster(nextRoster, nextPresent) {
+    lsSet(ROSTER_KEY, {
+      roster: nextRoster,
+      present: nextPresent
+    });
+  }
+  function persistHistory(nextHistory, nextWeekLog) {
+    lsSet(HISTORY_KEY, {
+      history: nextHistory,
+      weekLog: nextWeekLog
+    });
+  }
+  function persistWeek(nextWeek) {
+    lsSet(WEEK_KEY, {
+      week: nextWeek
+    });
+  }
   function addPlayer() {
     const name = newName.trim();
-    if (!name || roster.includes(name)) { setNewName(""); return; }
+    if (!name || roster.includes(name)) {
+      setNewName("");
+      return;
+    }
     const nextRoster = [...roster, name];
-    const nextPresent = { ...present, [name]: true };
-    setRoster(nextRoster); setPresent(nextPresent); setNewName("");
+    const nextPresent = {
+      ...present,
+      [name]: true
+    };
+    setRoster(nextRoster);
+    setPresent(nextPresent);
+    setNewName("");
     persistRoster(nextRoster, nextPresent);
     inputRef.current && inputRef.current.focus();
   }
   function removePlayer(name) {
-    const nextRoster = roster.filter((p) => p !== name);
-    const nextPresent = { ...present }; delete nextPresent[name];
-    setRoster(nextRoster); setPresent(nextPresent);
+    const nextRoster = roster.filter(p => p !== name);
+    const nextPresent = {
+      ...present
+    };
+    delete nextPresent[name];
+    setRoster(nextRoster);
+    setPresent(nextPresent);
     persistRoster(nextRoster, nextPresent);
   }
   function toggleAttendance(name) {
-    const nextPresent = { ...present, [name]: !present[name] };
-    setPresent(nextPresent); persistRoster(roster, nextPresent);
+    const nextPresent = {
+      ...present,
+      [name]: !present[name]
+    };
+    setPresent(nextPresent);
+    persistRoster(roster, nextPresent);
   }
   function generate() {
-    const attending = roster.filter((p) => present[p]);
+    const attending = roster.filter(p => present[p]);
     if (attending.length < 2) return;
-    const { teams, score } = generateBestPairing(attending, history);
-    setCurrentTeams(teams); setCurrentScore(score); setMatchups(generateMatchups(teams));
+    const {
+      teams,
+      score
+    } = generateBestPairing(attending, history);
+    setCurrentTeams(teams);
+    setCurrentScore(score);
+    setMatchups(generateMatchups(teams));
   }
-  function reshuffleMatchups() { if (currentTeams) setMatchups(generateMatchups(currentTeams)); }
+  function reshuffleMatchups() {
+    if (currentTeams) setMatchups(generateMatchups(currentTeams));
+  }
   function lockInWeek() {
     if (!currentTeams) return;
-    const nextHistory = { ...history };
+    const nextHistory = {
+      ...history
+    };
     for (const team of currentTeams) {
       for (let x = 0; x < team.length; x++) {
         for (let y = x + 1; y < team.length; y++) {
@@ -190,151 +275,177 @@ function TeamScramble() {
         }
       }
     }
-    const nextWeekLog = [...weekLog, { week, teams: currentTeams, matchups }];
-    setHistory(nextHistory); setWeekLog(nextWeekLog); persistHistory(nextHistory, nextWeekLog);
+    const nextWeekLog = [...weekLog, {
+      week,
+      teams: currentTeams,
+      matchups
+    }];
+    setHistory(nextHistory);
+    setWeekLog(nextWeekLog);
+    persistHistory(nextHistory, nextWeekLog);
     const nextWeek = week + 1;
-    setWeek(nextWeek); persistWeek(nextWeek);
-    setCurrentTeams(null); setCurrentScore(0); setMatchups(null);
+    setWeek(nextWeek);
+    persistWeek(nextWeek);
+    setCurrentTeams(null);
+    setCurrentScore(0);
+    setMatchups(null);
   }
   function resetSeason() {
-    setHistory({}); setWeekLog([]); setWeek(1); setCurrentTeams(null); setCurrentScore(0); setMatchups(null);
-    persistHistory({}, []); persistWeek(1);
+    setHistory({});
+    setWeekLog([]);
+    setWeek(1);
+    setCurrentTeams(null);
+    setCurrentScore(0);
+    setMatchups(null);
+    persistHistory({}, []);
+    persistWeek(1);
   }
-
-  const attendingCount = roster.filter((p) => present[p]).length;
-  const teamLabel = (team) => team.join(" + ");
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-      <div className="border-b border-cyan-900 bg-gradient-to-b from-slate-900 to-slate-950">
-        <div className="max-w-4xl mx-auto px-5 py-6 flex items-center justify-between">
-          <div>
-            <div className="text-xs tracking-widest text-orange-400 font-mono uppercase mb-1">Couch Esports League</div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white uppercase">Team Scramble</h1>
-          </div>
-          <div className="text-right">
-            <div className="text-xs tracking-widest text-slate-500 font-mono uppercase">Week</div>
-            <div className="text-4xl font-mono font-bold text-cyan-400 tabular-nums leading-none">{String(week).padStart(2, "0")}</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-5 py-6 grid gap-6 sm:grid-cols-5">
-        <div className="sm:col-span-2 space-y-3">
-          <h2 className="text-xs font-mono uppercase tracking-widest text-slate-400">Roster ({attendingCount}/{roster.length} here)</h2>
-          <div className="flex gap-2">
-            <input ref={inputRef} value={newName} onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addPlayer()} placeholder="Add player name"
-              className="flex-1 bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500" />
-            <button onClick={addPlayer} className="shrink-0 bg-cyan-950 border border-cyan-700 text-cyan-300 rounded-md px-3 hover:bg-cyan-900 transition-colors">
-              <Icon path={ICONS.userPlus} size={16} />
-            </button>
-          </div>
-          <div className="space-y-1.5 max-h-[420px] overflow-y-auto pr-1">
-            {roster.length === 0 && (
-              <div className="text-sm text-slate-500 italic py-4 text-center border border-dashed border-slate-800 rounded-md">Add your players to get started</div>
-            )}
-            {roster.map((name) => (
-              <div key={name} className={`flex items-center justify-between rounded-md px-3 py-2 border transition-colors ${present[name] ? "bg-slate-900 border-slate-700" : "bg-slate-950 border-slate-800 opacity-50"}`}>
-                <button onClick={() => toggleAttendance(name)} className="flex items-center gap-2 flex-1 text-left">
-                  <span className={`w-4 h-4 rounded-sm border flex items-center justify-center shrink-0 ${present[name] ? "bg-orange-500 border-orange-500" : "border-slate-600"}`}>
-                    {present[name] && <Icon path={ICONS.check} size={11} className="text-slate-950" />}
-                  </span>
-                  <span className="text-sm text-slate-100 truncate">{name}</span>
-                </button>
-                <button onClick={() => removePlayer(name)} className="text-slate-600 hover:text-red-400 transition-colors shrink-0 ml-2">
-                  <Icon path={ICONS.x} size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="sm:col-span-3 space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <button onClick={generate} disabled={attendingCount < 2}
-              className="flex items-center gap-2 bg-orange-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-slate-950 font-semibold text-sm rounded-md px-4 py-2.5 hover:bg-orange-400 transition-colors">
-              <Icon path={ICONS.shuffle} size={16} /> Scramble Teams
-            </button>
-            {currentTeams && currentTeams.length > 1 && (
-              <button onClick={reshuffleMatchups} className="flex items-center gap-2 bg-slate-800 border border-slate-700 text-slate-300 font-semibold text-sm rounded-md px-4 py-2.5 hover:bg-slate-700 transition-colors">
-                <Icon path={ICONS.swords} size={16} /> Reshuffle Matchups
-              </button>
-            )}
-            {currentTeams && (
-              <button onClick={lockInWeek} className="flex items-center gap-2 bg-cyan-950 border border-cyan-700 text-cyan-300 font-semibold text-sm rounded-md px-4 py-2.5 hover:bg-cyan-900 transition-colors">
-                <Icon path={ICONS.trophy} size={16} /> Lock In &amp; Start Week {week}
-              </button>
-            )}
-          </div>
-
-          {currentTeams && (
-            <div className="text-xs font-mono text-slate-500">
-              {currentScore === 0 ? (
-                <span className="text-cyan-400">✓ 0 repeat teammates from prior weeks</span>
-              ) : (
-                <span className="text-orange-400">{currentScore} repeat teammate pairing{currentScore > 1 ? "s" : ""} — best available with this group size</span>
-              )}
-            </div>
-          )}
-
-          {!currentTeams && (
-            <div className="border border-dashed border-slate-800 rounded-lg py-12 text-center text-slate-500 text-sm">
-              {attendingCount < 2 ? "Mark at least 2 players present to scramble teams" : "Hit \u201cScramble Teams\u201d to generate this week's matchups"}
-            </div>
-          )}
-
-          {currentTeams && matchups && (
-            <div className="space-y-2.5">
-              {matchups.map((m, idx) => (
-                <div key={idx} className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-3">
-                  <div className="font-mono text-xs tracking-widest text-orange-400 mb-2">MATCH {String(idx + 1).padStart(2, "0")}</div>
-                  {m.b ? (
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 text-sm font-medium text-slate-100 text-right">{teamLabel(m.a)}</div>
-                      <div className="shrink-0 font-mono text-xs text-slate-500 px-2">VS</div>
-                      <div className="flex-1 text-sm font-medium text-slate-100">{teamLabel(m.b)}</div>
-                    </div>
-                  ) : (
-                    <div className="text-sm font-medium text-center text-slate-300">{teamLabel(m.a)} <span className="text-slate-500 font-mono text-xs">— BYE</span></div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="pt-2">
-            <button onClick={() => setShowHistory((s) => !s)} className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-colors">
-              <Icon path={ICONS.history} size={13} /> Season History ({weekLog.length} weeks logged)
-            </button>
-            {showHistory && (
-              <div className="mt-3 space-y-3">
-                {weekLog.length === 0 && <div className="text-sm text-slate-600 italic">No weeks locked in yet.</div>}
-                {[...weekLog].reverse().map((w) => (
-                  <div key={w.week} className="text-sm">
-                    <div className="font-mono text-xs text-slate-500 mb-1">Week {String(w.week).padStart(2, "0")}</div>
-                    <div className="text-slate-400 space-y-0.5">
-                      {(w.matchups || w.teams.map((t) => ({ a: t, b: null }))).map((m, i) => (
-                        <div key={i}>{teamLabel(m.a)}{m.b ? ` vs ${teamLabel(m.b)}` : " (bye)"}</div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                {weekLog.length > 0 && (
-                  <button onClick={resetSeason} className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-red-400 transition-colors mt-2">
-                    <Icon path={ICONS.rotate} size={12} /> Reset season history
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const attendingCount = roster.filter(p => present[p]).length;
+  const teamLabel = team => team.join(" + ");
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen bg-slate-950 text-slate-100 font-sans"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "border-b border-cyan-900 bg-gradient-to-b from-slate-900 to-slate-950"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "max-w-4xl mx-auto px-5 py-6 flex items-center justify-between"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs tracking-widest text-orange-400 font-mono uppercase mb-1"
+  }, "Couch Esports League"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-2xl sm:text-3xl font-extrabold tracking-tight text-white uppercase"
+  }, "Team Scramble")), /*#__PURE__*/React.createElement("div", {
+    className: "text-right"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs tracking-widest text-slate-500 font-mono uppercase"
+  }, "Week"), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-mono font-bold text-cyan-400 tabular-nums leading-none"
+  }, String(week).padStart(2, "0"))))), /*#__PURE__*/React.createElement("div", {
+    className: "max-w-4xl mx-auto px-5 py-6 grid gap-6 sm:grid-cols-5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "sm:col-span-2 space-y-3"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-xs font-mono uppercase tracking-widest text-slate-400"
+  }, "Roster (", attendingCount, "/", roster.length, " here)"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    ref: inputRef,
+    value: newName,
+    onChange: e => setNewName(e.target.value),
+    onKeyDown: e => e.key === "Enter" && addPlayer(),
+    placeholder: "Add player name",
+    className: "flex-1 bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: addPlayer,
+    className: "shrink-0 bg-cyan-950 border border-cyan-700 text-cyan-300 rounded-md px-3 hover:bg-cyan-900 transition-colors"
+  }, /*#__PURE__*/React.createElement(Icon, {
+    path: ICONS.userPlus,
+    size: 16
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-1.5 max-h-[420px] overflow-y-auto pr-1"
+  }, roster.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-500 italic py-4 text-center border border-dashed border-slate-800 rounded-md"
+  }, "Add your players to get started"), roster.map(name => /*#__PURE__*/React.createElement("div", {
+    key: name,
+    className: `flex items-center justify-between rounded-md px-3 py-2 border transition-colors ${present[name] ? "bg-slate-900 border-slate-700" : "bg-slate-950 border-slate-800 opacity-50"}`
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => toggleAttendance(name),
+    className: "flex items-center gap-2 flex-1 text-left"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: `w-4 h-4 rounded-sm border flex items-center justify-center shrink-0 ${present[name] ? "bg-orange-500 border-orange-500" : "border-slate-600"}`
+  }, present[name] && /*#__PURE__*/React.createElement(Icon, {
+    path: ICONS.check,
+    size: 11,
+    className: "text-slate-950"
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm text-slate-100 truncate"
+  }, name)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => removePlayer(name),
+    className: "text-slate-600 hover:text-red-400 transition-colors shrink-0 ml-2"
+  }, /*#__PURE__*/React.createElement(Icon, {
+    path: ICONS.x,
+    size: 14
+  })))))), /*#__PURE__*/React.createElement("div", {
+    className: "sm:col-span-3 space-y-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: generate,
+    disabled: attendingCount < 2,
+    className: "flex items-center gap-2 bg-orange-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-slate-950 font-semibold text-sm rounded-md px-4 py-2.5 hover:bg-orange-400 transition-colors"
+  }, /*#__PURE__*/React.createElement(Icon, {
+    path: ICONS.shuffle,
+    size: 16
+  }), " Scramble Teams"), currentTeams && currentTeams.length > 1 && /*#__PURE__*/React.createElement("button", {
+    onClick: reshuffleMatchups,
+    className: "flex items-center gap-2 bg-slate-800 border border-slate-700 text-slate-300 font-semibold text-sm rounded-md px-4 py-2.5 hover:bg-slate-700 transition-colors"
+  }, /*#__PURE__*/React.createElement(Icon, {
+    path: ICONS.swords,
+    size: 16
+  }), " Reshuffle Matchups"), currentTeams && /*#__PURE__*/React.createElement("button", {
+    onClick: lockInWeek,
+    className: "flex items-center gap-2 bg-cyan-950 border border-cyan-700 text-cyan-300 font-semibold text-sm rounded-md px-4 py-2.5 hover:bg-cyan-900 transition-colors"
+  }, /*#__PURE__*/React.createElement(Icon, {
+    path: ICONS.trophy,
+    size: 16
+  }), " Lock In & Start Week ", week)), currentTeams && /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-mono text-slate-500"
+  }, currentScore === 0 ? /*#__PURE__*/React.createElement("span", {
+    className: "text-cyan-400"
+  }, "✓ 0 repeat teammates from prior weeks") : /*#__PURE__*/React.createElement("span", {
+    className: "text-orange-400"
+  }, currentScore, " repeat teammate pairing", currentScore > 1 ? "s" : "", " — best available with this group size")), !currentTeams && /*#__PURE__*/React.createElement("div", {
+    className: "border border-dashed border-slate-800 rounded-lg py-12 text-center text-slate-500 text-sm"
+  }, attendingCount < 2 ? "Mark at least 2 players present to scramble teams" : "Hit \u201cScramble Teams\u201d to generate this week's matchups"), currentTeams && matchups && /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2.5"
+  }, matchups.map((m, idx) => /*#__PURE__*/React.createElement("div", {
+    key: idx,
+    className: "bg-slate-900 border border-slate-700 rounded-lg px-4 py-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-xs tracking-widest text-orange-400 mb-2"
+  }, "MATCH ", String(idx + 1).padStart(2, "0")), m.b ? /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 text-sm font-medium text-slate-100 text-right"
+  }, teamLabel(m.a)), /*#__PURE__*/React.createElement("div", {
+    className: "shrink-0 font-mono text-xs text-slate-500 px-2"
+  }, "VS"), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 text-sm font-medium text-slate-100"
+  }, teamLabel(m.b))) : /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-medium text-center text-slate-300"
+  }, teamLabel(m.a), " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500 font-mono text-xs"
+  }, "— BYE"))))), /*#__PURE__*/React.createElement("div", {
+    className: "pt-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowHistory(s => !s),
+    className: "flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-colors"
+  }, /*#__PURE__*/React.createElement(Icon, {
+    path: ICONS.history,
+    size: 13
+  }), " Season History (", weekLog.length, " weeks logged)"), showHistory && /*#__PURE__*/React.createElement("div", {
+    className: "mt-3 space-y-3"
+  }, weekLog.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-600 italic"
+  }, "No weeks locked in yet."), [...weekLog].reverse().map(w => /*#__PURE__*/React.createElement("div", {
+    key: w.week,
+    className: "text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-xs text-slate-500 mb-1"
+  }, "Week ", String(w.week).padStart(2, "0")), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 space-y-0.5"
+  }, (w.matchups || w.teams.map(t => ({
+    a: t,
+    b: null
+  }))).map((m, i) => /*#__PURE__*/React.createElement("div", {
+    key: i
+  }, teamLabel(m.a), m.b ? ` vs ${teamLabel(m.b)}` : " (bye)"))))), weekLog.length > 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: resetSeason,
+    className: "flex items-center gap-1.5 text-xs text-slate-600 hover:text-red-400 transition-colors mt-2"
+  }, /*#__PURE__*/React.createElement(Icon, {
+    path: ICONS.rotate,
+    size: 12
+  }), " Reset season history"))))));
 }
-
-ReactDOM.createRoot(document.getElementById("root")).render(<TeamScramble />);
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(TeamScramble, null));
 </script>
 </body>
 </html>
